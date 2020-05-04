@@ -15,10 +15,7 @@
   let canvas;
   let ctx;
   let startTime;
-  let viperX = CANVAS_WIDTH / 2;
-  let viperY = CANVAS_HEIGHT / 2;
-  let isComing = false;
-  let comingStart;
+  let viper = null;
 
   window.addEventListener('load', () => {
     util = new Canvas2DUtility(document.body.querySelector('#main_canvas'));
@@ -36,18 +33,20 @@
 
   function eventSetting() {
     window.addEventListener('keydown', (event) => {
+      if (viper.isComing) { return; }
+
       switch(event.key) {
         case 'ArrowLeft':
-          viperX -= 10;
+          viper.position.x -= 10;
           break;
         case 'ArrowRight':
-          viperX += 10;
+          viper.position.x += 10;
           break;
         case 'ArrowUp':
-          viperY -= 10;
+          viper.position.y -= 10;
           break;
         case 'ArrowDown':
-          viperY += 10;
+          viper.position.y += 10;
           break;
       }
     }, false)
@@ -58,9 +57,13 @@
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
 
-    isComing = true;
-    comingStart = Date.now();
-    viperY = CANVAS_HEIGHT;
+    viper = new Viper(ctx, 0, 0, image);
+    viper.setComing(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT,
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT - 100
+    )
   }
 
   function render() {
@@ -69,27 +72,24 @@
 
     // 現在までの経過時間を秒単位で取得する
     let nowTime = (Date.now() - startTime) / 1000;
-    // 時間の経過が見た目でわかりやすいように自機をサイン波で動かす
-    // let s = Math.sin(nowTime);
-    // // サインやコサインは半径1の円を基準にしており、得られる範囲が-1.0~1.0になるため、効果がわかりやすいように100倍する
-    // let x = s * 100.0;
 
     // 登場シーンの処理
-    if (isComing) {
+    if (viper.isComing) {
       let justTime = Date.now();
-      let comingTime = (justTime - comingStart) / 1000;
-      viperY = CANVAS_HEIGHT - comingTime * 50;
-      if (viperY <= CANVAS_HEIGHT - 100) {
-        isComing = false;
-        viperY = CANVAS_HEIGHT - 100;
+      let comingTime = (justTime - viper.comingStart) / 1000;
+      let y = CANVAS_HEIGHT - comingTime * 50;
+
+      if (y <= viper.comingEndPosition.y) {
+        viper.isComing = false;
+        y = viper.comingEndPosition.y;
       }
+      viper.position.set(viper.position.x, y);
       if (justTime % 100 < 50) {
         ctx.globalAlpha = 0.5;
       }
     }
 
-    // ctx.drawImage(image, CANVAS_WIDTH / 2 + x, CANVAS_HEIGHT / 2);
-    ctx.drawImage(image, viperX, viperY);
+    viper.draw();
 
     requestAnimationFrame(render);
   }
