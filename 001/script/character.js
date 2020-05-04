@@ -24,17 +24,23 @@ class Character {
    * @param {number} life - キャラクターのライフ(生存フラグを兼ねる)
    * @param {Image} image - キャラクターの画像 
    */
-  constructor(ctx, x, y, life, image) {
+  constructor(ctx, x, y, w, h, life, image) {
     this.ctx = ctx;
     this.position = new Position(x, y);
+    this.width = w;
+    this.height = h;
     this.life = life;
     this.image = image;
   }
   draw() {
+    let offsetX = this.width / 2;
+    let offsetY = this.height / 2;
     this.ctx.drawImage(
       this.image,
-      this.position.x,
-      this.position.y
+      this.position.x - offsetX,
+      this.position.y - offsetY,
+      this.width,
+      this.height
     )
   }
 }
@@ -47,8 +53,8 @@ class Viper extends Character {
    * @param {number} y - Y座標
    * @param {Image} image - キャラクターの画像 
    */
-  constructor(ctx, x, y, image) {
-    super(ctx, x, y, 0, image);
+  constructor(ctx, x, y, w, h, image) {
+    super(ctx, x, y, w, h, 0, image);
     this.isComing = false;
     this.comingStart = null;
     this.comingStartPosition = null;
