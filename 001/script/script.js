@@ -1,6 +1,13 @@
 
 (function() {
   /**
+   * キーの押下状態を調べるためのオブジェクト
+   * @global
+   * @type {object}
+   */
+  window.isKeyDown = {};
+
+  /**
    * canvasの幅
    * @type {number}
    */
@@ -33,23 +40,11 @@
 
   function eventSetting() {
     window.addEventListener('keydown', (event) => {
-      if (viper.isComing) { return; }
-
-      switch(event.key) {
-        case 'ArrowLeft':
-          viper.position.x -= 10;
-          break;
-        case 'ArrowRight':
-          viper.position.x += 10;
-          break;
-        case 'ArrowUp':
-          viper.position.y -= 10;
-          break;
-        case 'ArrowDown':
-          viper.position.y += 10;
-          break;
-      }
-    }, false)
+      isKeyDown[`key_${event.key}`] = true;
+    }, false);
+    window.addEventListener('keyup', (event) => {
+      isKeyDown[`key_${event.key}`] = false;
+    }, false);
   }
 
   function initialize() {
