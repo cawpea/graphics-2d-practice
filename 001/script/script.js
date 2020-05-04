@@ -73,23 +73,8 @@
     // 現在までの経過時間を秒単位で取得する
     let nowTime = (Date.now() - startTime) / 1000;
 
-    // 登場シーンの処理
-    if (viper.isComing) {
-      let justTime = Date.now();
-      let comingTime = (justTime - viper.comingStart) / 1000;
-      let y = CANVAS_HEIGHT - comingTime * 50;
-
-      if (y <= viper.comingEndPosition.y) {
-        viper.isComing = false;
-        y = viper.comingEndPosition.y;
-      }
-      viper.position.set(viper.position.x, y);
-      if (justTime % 100 < 50) {
-        ctx.globalAlpha = 0.5;
-      }
-    }
-
-    viper.draw();
+    // 自機キャラクターの状態を更新する
+    viper.update();
 
     requestAnimationFrame(render);
   }

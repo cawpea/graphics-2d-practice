@@ -51,12 +51,35 @@ class Viper extends Character {
     super(ctx, x, y, 0, image);
     this.isComing = false;
     this.comingStart = null;
+    this.comingStartPosition = null;
     this.comingEndPosition = null;
   }
   setComing(startX, startY, endX, endY) {
     this.isComing = true;
     this.comingStart = Date.now();
     this.position.set(startX, startY);
+    this.comingStartPosition = new Position(startX, startY);
     this.comingEndPosition = new Position(endX, endY);
+  }
+  update() {
+    let justTime = Date.now();
+
+    if (this.isComing) {
+      let comingTime = (justTime - this.comingStart) / 1000;
+      let y = this.comingStartPosition.y - comingTime * 50;
+
+      if (y <= this.comingEndPosition.y) {
+        this.isComing = false;
+        y = this.comingEndPosition.y;
+      }
+      this.position.set(this.position.x, y);
+
+      if (justTime % 100 < 50) {
+        this.ctx.globalAlpha = 0.5;
+      }
+    }
+
+    this.draw();
+    this.ctx.globalAlpha = 1.0;
   }
 }
