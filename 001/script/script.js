@@ -17,6 +17,8 @@
   let startTime;
   let viperX = CANVAS_WIDTH / 2;
   let viperY = CANVAS_HEIGHT / 2;
+  let isComing = false;
+  let comingStart;
 
   window.addEventListener('load', () => {
     util = new Canvas2DUtility(document.body.querySelector('#main_canvas'));
@@ -55,9 +57,14 @@
     // canvasの大きさを設定
     canvas.width = CANVAS_WIDTH;
     canvas.height = CANVAS_HEIGHT;
+
+    isComing = true;
+    comingStart = Date.now();
+    viperY = CANVAS_HEIGHT;
   }
 
   function render() {
+    ctx.globalAlpha = 1.0;
     util.drawRect(0, 0, canvas.width, canvas.height, '#eeeeee');
 
     // 現在までの経過時間を秒単位で取得する
@@ -66,6 +73,20 @@
     // let s = Math.sin(nowTime);
     // // サインやコサインは半径1の円を基準にしており、得られる範囲が-1.0~1.0になるため、効果がわかりやすいように100倍する
     // let x = s * 100.0;
+
+    // 登場シーンの処理
+    if (isComing) {
+      let justTime = Date.now();
+      let comingTime = (justTime - comingStart) / 1000;
+      viperY = CANVAS_HEIGHT - comingTime * 50;
+      if (viperY <= CANVAS_HEIGHT - 100) {
+        isComing = false;
+        viperY = CANVAS_HEIGHT - 100;
+      }
+      if (justTime % 100 < 50) {
+        ctx.globalAlpha = 0.5;
+      }
+    }
 
     // ctx.drawImage(image, CANVAS_WIDTH / 2 + x, CANVAS_HEIGHT / 2);
     ctx.drawImage(image, viperX, viperY);
