@@ -61,6 +61,8 @@ class Viper extends Character {
   constructor(ctx, x, y, w, h, image) {
     super(ctx, x, y, w, h, 0, image);
     this.speed = 3;
+    this.shotCheckCounter = 0;
+    this.shotInterval = 10;
     this.isComing = false;
     this.comingStart = null;
     this.comingStartPosition = null;
@@ -111,15 +113,18 @@ class Viper extends Character {
       let ty = Math.min(Math.max(this.position.y, 0), canvasHeight);
       this.position.set(tx, ty);
 
-      if (window.isKeyDown.key_z) {
+      if (window.isKeyDown.key_z && this.shotCheckCounter >= 0) {
         for (let i = 0; i < this.shotArray.length; i++) {
           if (this.shotArray[i].life <= 0) {
             this.shotArray[i].set(this.position.x, this.position.y);
+            // ショットを生成したのでインターバルを設定する
+            this.shotCheckCounter = -this.shotInterval;
             // ひとつ生成したらループを抜ける
             break;
           }
         }
       }
+      ++this.shotCheckCounter;
     }
 
     this.draw();
