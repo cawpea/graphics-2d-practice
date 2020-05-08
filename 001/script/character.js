@@ -68,6 +68,7 @@ class Viper extends Character {
     this.comingStartPosition = null;
     this.comingEndPosition = null;
     this.shotArray = null;
+    this.singleShotArray = null;
   }
   setComing(startX, startY, endX, endY) {
     this.isComing = true;
@@ -76,8 +77,9 @@ class Viper extends Character {
     this.comingStartPosition = new Position(startX, startY);
     this.comingEndPosition = new Position(endX, endY);
   }
-  setShotArray(shotArray) {
+  setShotArray(shotArray, singleShotArray) {
     this.shotArray = shotArray;
+    this.singleShotArray = singleShotArray;
   }
   update() {
     let justTime = Date.now();
@@ -123,6 +125,16 @@ class Viper extends Character {
             break;
           }
         }
+        for (let i = 0; i < this.singleShotArray.length; i += 2) {
+          if (this.singleShotArray[i].life <= 0 && this.singleShotArray[i + 1].life <= 0) {
+            this.singleShotArray[i].set(this.position.x, this.position.y);
+            this.singleShotArray[i].setVector(0.2, -0.9);
+            this.singleShotArray[i + 1].set(this.position.x, this.position.y);
+            this.singleShotArray[i + 1].setVector(-0.2, -0.9);
+            this.shotCheckCounter = -this.shotInterval;
+            break;
+          }
+        }
       }
       ++this.shotCheckCounter;
     }
@@ -145,10 +157,14 @@ class Shot extends Character {
   constructor(ctx, x, y, w, h, imagePath) {
     super(ctx, x, y, w, h, 0, imagePath);
     this.speed = 7;
+    this.vector = new Position(0.0, -1.0);
   }
   set(x, y) {
     this.position.set(x, y);
     this.life = 1;
+  }
+  setVector(x, y) {
+    this.vector.set(x, y);
   }
   update() {
     if (this.life <= 0) { return; }
@@ -157,7 +173,8 @@ class Shot extends Character {
       this.life = 0;
     }
     // ショットを上に向かって移動させる
-    this.position.y -= this.speed;
+    this.position.x += this.vector.x * this.speed;
+    this.position.y += this.vector.y * this.speed;
     this.draw();
   }
 }
