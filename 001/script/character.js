@@ -183,24 +183,66 @@ class Viper extends Character {
 class Enemy extends Character {
   constructor(ctx, x, y, w, h, imagePath) {
     super(ctx, x, y, w, h, 0, imagePath);
+    /**
+     * 自身のタイプ
+     */
+    this.type = 'default';
+    /**
+     * 自身が出現してからのフレーム数
+     */
+    this.frame = 0;
     this.speed = 3;
+    this.shotArray = null;
   }
-  set(x, y, life = 1) {
+  set(x, y, life = 1, type = 'default') {
     this.position.set(x, y);
     this.life = life;
+    this.type = type;
+    this.frame = 0;
+  }
+  setShotArray(shotArray) {
+    this.shotArray = shotArray;
   }
   update() {
     if (this.life <= 0) {
       return;
     }
-    // 敵キャラクターが画面外（画面下端）へ移動していたらライフを0に設定する
-    if (this.position.y - this.height > this.ctx.canvas.height) {
-      this.life = 0;
+
+    switch(this.type) {
+      case 'default':
+      default:
+        // 配置後のフレームが50のときにショットを放つ
+        if (this.frame === 50) {
+          this.fire();
+        }
+        this.position.x += this.vector.x * this.speed;
+        this.position.y += this.vector.y * this.speed;
+
+        // 敵キャラクターが画面外（画面下端）へ移動していたらライフを0に設定する
+        if (this.position.y - this.height > this.ctx.canvas.height) {
+          this.life = 0;
+        }
+        break;
     }
-    this.position.x += this.vector.x * this.speed;
-    this.position.y += this.vector.y * this.speed;
 
     this.draw();
+
+    ++this.frame;
+  }
+  /**
+   * 自身から指定された方向にショットを放つ
+   * @param {number} x - 進行方向ベクトルのx要素
+   * @param {number} y - 進行方向ベクトルのy要素
+   */
+  fire(x = 0.0, y = 1.0) {
+    for(let i = 0; i < this.shotArray.length; i++) {
+      if (this.shotArray[i].life <= 0) {
+        this.shotArray[i].set(this.position.x, this.position.y);
+        this.shotArray[i].setSpeed(5.0);
+        this.shotArray[i].setVector(x, y);
+        break;
+      }
+    }
   }
 }
 
@@ -222,6 +264,12 @@ class Shot extends Character {
   set(x, y) {
     this.position.set(x, y);
     this.life = 1;
+  }
+  setSpeed(speed) {
+    if (!speed) {
+      return;
+    }
+    this.speed = speed;
   }
   update() {
     if (this.life <= 0) { return; }

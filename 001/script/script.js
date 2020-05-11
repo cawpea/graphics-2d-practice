@@ -25,6 +25,11 @@
   const SHOT_MAX_COUNT = 10;
 
   /**
+   * 敵キャラクターのショットの最大個数
+   */
+  const ENEMY_SHOT_MAX_COUNT = 50;
+
+  /**
    * canvasの高さ
    * @type {number}
    */
@@ -53,6 +58,11 @@
    */
   let singleShotArray = [];
 
+  /**
+   * 敵キャラクターのショットのインスタンスを格納する配列
+   */
+  let enemyShotArray = [];
+
   window.addEventListener('load', () => {
     util = new Canvas2DUtility(document.body.querySelector('#main_canvas'));
     canvas = util.canvas;
@@ -78,16 +88,18 @@
       }
     });
     scene.add('invade', (time) => {
-      if (scene.frame !== 0) {
-        return;
-      }
-      for(let i = 0; i < ENEMY_MAX_COUNT; ++i) {
-        if (enemyArray[i].life <= 0) {
-          let e = enemyArray[i];
-          e.set(CANVAS_WIDTH / 2, -e.height);
-          e.setVector(0.0, 1.0);
-          break;
+      if (scene.frame === 0) {
+        for(let i = 0; i < ENEMY_MAX_COUNT; ++i) {
+          if (enemyArray[i].life <= 0) {
+            let e = enemyArray[i];
+            e.set(CANVAS_WIDTH / 2, -e.height);
+            e.setVector(0.0, 1.0);
+            break;
+          }
         }
+      }
+      if (scene.frame === 100) {
+        scene.use('invade');
       }
     });
     scene.use('intro');
@@ -119,6 +131,14 @@
     }
 
     viper.setShotArray(shotArray, singleShotArray);
+
+    for(let i = 0; i < ENEMY_SHOT_MAX_COUNT; i++) {
+      enemyShotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/enemy_shot.png');
+    }
+    for(let i = 0; i < ENEMY_MAX_COUNT; i++) {
+      enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png');
+      enemyArray[i].setShotArray(enemyShotArray);
+    }
   }
 
   function loadCheck() {
@@ -131,6 +151,9 @@
       ready = ready && v.ready;
     });
     singleShotArray.map(v => {
+      ready = ready && v.ready;
+    });
+    enemyShotArray.map(v => {
       ready = ready && v.ready;
     });
 
@@ -169,6 +192,11 @@
 
     // シングルショットの状態を更新する
     singleShotArray.map((v) => {
+      v.update();
+    });
+
+    // 敵キャラクターのショット状態を更新する
+    enemyShotArray.map((v) => {
       v.update();
     });
 
