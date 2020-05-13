@@ -10,6 +10,15 @@ class Position {
     if(x) { this.x = x; }
     if(y) { this.y = y; }
   }
+  /**
+   * 対象の Position クラスのインスタンスとの距離を返す
+   * @param {Position} target 
+   */
+  distance(target) {
+    let x = this.x - target.x;
+    let y = this.y - target.y;
+    return Math.sqrt(x * x + y * y);
+  }
 }
 
 /**
@@ -152,6 +161,7 @@ class Viper extends Character {
         for (let i = 0; i < this.shotArray.length; i++) {
           if (this.shotArray[i].life <= 0) {
             this.shotArray[i].set(this.position.x, this.position.y);
+            this.shotArray[i].setPower(2);
             // ショットを生成したのでインターバルを設定する
             this.shotCheckCounter = -this.shotInterval;
             // ひとつ生成したらループを抜ける
@@ -260,6 +270,12 @@ class Shot extends Character {
     super(ctx, x, y, w, h, 0, imagePath);
     this.speed = 7;
     this.vector = new Position(0.0, -1.0);
+    this.power = 1;
+    /**
+     * 自身と衝突判定を取る対象を格納する
+     * @type {Array<Character>}
+     */
+    this.targetArray = [];
   }
   set(x, y) {
     this.position.set(x, y);
@@ -271,6 +287,26 @@ class Shot extends Character {
     }
     this.speed = speed;
   }
+  /**
+   * ショットのスピードを判定する
+   * @param {number} [power] - 設定する攻撃力 
+   */
+  setPower(power) {
+    if (power == null || power <= 0) {
+      return;
+    }
+    this.power = power;
+  }
+  /**
+   * ショットが衝突判定を行う対象を設定する
+   * @param {Array<Character>} [targets] - 衝突判定の対象を含む配列 
+   */
+  setTargets(targets) {
+    if (targets == null || !Array.isArray(targets) || targets.length <= 0) {
+      return;
+    }
+    this.targetArray = targets;
+  }
   update() {
     if (this.life <= 0) { return; }
 
@@ -280,6 +316,19 @@ class Shot extends Character {
     // ショットを上に向かって移動させる
     this.position.x += this.vector.x * this.speed;
     this.position.y += this.vector.y * this.speed;
+
+    // ショットと対象との衝突判定を行う
+    this.targetArray.map((v) => {
+      if (this.life <= 0 || v.life <= 0) {
+        return;
+      }
+      let dist = this.position.distance(v.position);
+      // 自身と対象の幅の1/4の距離まで近づいている場合、衝突とみなす
+      if (dist <= (this.width + v.width) / 4) {
+        v.life -= this.power; // 対象のライフを攻撃力分減算する
+        this.life = 0; // 自身のショットを無効にする
+      }
+    });
 
     // 座標系の回転を考慮した描画を行う
     this.rotationDraw();
