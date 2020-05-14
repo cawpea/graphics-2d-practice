@@ -30,6 +30,11 @@
   const ENEMY_SHOT_MAX_COUNT = 50;
 
   /**
+   * 爆発エフェクトの最大個数
+   */
+  const EXPLOSION_MAX_COUNT = 10;
+
+  /**
    * canvasの高さ
    * @type {number}
    */
@@ -63,6 +68,11 @@
    */
   let enemyShotArray = [];
 
+  /**
+   * 爆発エフェクトのインスタンスを格納する配列
+   */
+  let explosionArray = [];
+
   window.addEventListener('load', () => {
     util = new Canvas2DUtility(document.body.querySelector('#main_canvas'));
     canvas = util.canvas;
@@ -71,6 +81,56 @@
     initialize();
     loadCheck();
   });
+
+  function initialize() {
+    // canvasの大きさを設定
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+
+    scene = new SceneManager();
+
+    viper = new Viper(ctx, 0, 0, 64, 64, './image/viper.png');
+    viper.setComing(
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT,
+      CANVAS_WIDTH / 2,
+      CANVAS_HEIGHT - 100
+    );
+
+    for(let i = 0; i < ENEMY_MAX_COUNT; i++) {
+      enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png');
+    }
+
+    for(let i = 0; i < EXPLOSION_MAX_COUNT; i++) {
+      explosionArray[i] = new Explosion(ctx, 50.0, 15, 30.0, 0.25);
+    }
+
+    for(let i = 0; i < SHOT_MAX_COUNT; i++) {
+      shotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/viper_shot.png');
+      singleShotArray[i * 2] = new Shot(ctx, 0, 0, 32, 32, './image/viper_single_shot.png');
+      singleShotArray[i * 2 + 1] = new Shot(ctx, 0, 0, 32, 32, './image/viper_single_shot.png');
+    }
+
+    viper.setShotArray(shotArray, singleShotArray);
+
+    for(let i = 0; i < ENEMY_SHOT_MAX_COUNT; i++) {
+      enemyShotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/enemy_shot.png');
+    }
+    for(let i = 0; i < ENEMY_MAX_COUNT; i++) {
+      enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png');
+      enemyArray[i].setShotArray(enemyShotArray);
+    }
+
+    // 衝突判定を行うために対象を設定する
+    for(let i = 0; i < SHOT_MAX_COUNT; i++) {
+      shotArray[i].setTargets(enemyArray);
+      singleShotArray[i * 2].setTargets(enemyArray);
+      singleShotArray[i * 2 + 1].setTargets(enemyArray);
+      shotArray[i].setExplosions(explosionArray);
+      singleShotArray[i * 2].setExplosions(explosionArray);
+      singleShotArray[i * 2 + 1].setExplosions(explosionArray);
+    }
+  }
 
   function eventSetting() {
     window.addEventListener('keydown', (event) => {
@@ -103,49 +163,6 @@
       }
     });
     scene.use('intro');
-  }
-
-  function initialize() {
-    // canvasの大きさを設定
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
-
-    scene = new SceneManager();
-
-    viper = new Viper(ctx, 0, 0, 64, 64, './image/viper.png');
-    viper.setComing(
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT,
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT - 100
-    );
-
-    for(let i = 0; i < ENEMY_MAX_COUNT; i++) {
-      enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png');
-    }
-
-    for(let i = 0; i < SHOT_MAX_COUNT; i++) {
-      shotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/viper_shot.png');
-      singleShotArray[i * 2] = new Shot(ctx, 0, 0, 32, 32, './image/viper_single_shot.png');
-      singleShotArray[i * 2 + 1] = new Shot(ctx, 0, 0, 32, 32, './image/viper_single_shot.png');
-    }
-
-    viper.setShotArray(shotArray, singleShotArray);
-
-    for(let i = 0; i < ENEMY_SHOT_MAX_COUNT; i++) {
-      enemyShotArray[i] = new Shot(ctx, 0, 0, 32, 32, './image/enemy_shot.png');
-    }
-    for(let i = 0; i < ENEMY_MAX_COUNT; i++) {
-      enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png');
-      enemyArray[i].setShotArray(enemyShotArray);
-    }
-
-    // 衝突判定を行うために対象を設定する
-    for(let i = 0; i < SHOT_MAX_COUNT; i++) {
-      shotArray[i].setTargets(enemyArray);
-      singleShotArray[i * 2].setTargets(enemyArray);
-      singleShotArray[i * 2 + 1].setTargets(enemyArray);
-    }
   }
 
   function loadCheck() {
@@ -204,6 +221,11 @@
 
     // 敵キャラクターのショット状態を更新する
     enemyShotArray.map((v) => {
+      v.update();
+    });
+
+    // 爆発エフェクトの状態を更新する
+    explosionArray.map((v) => {
       v.update();
     });
 

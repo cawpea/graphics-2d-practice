@@ -276,6 +276,11 @@ class Shot extends Character {
      * @type {Array<Character>}
      */
     this.targetArray = [];
+    /**
+     * 爆発エフェクトpのインスタンスを格納する
+     * @type {Array<Explosion>}
+     */
+    this.explosionArray = [];
   }
   set(x, y) {
     this.position.set(x, y);
@@ -307,6 +312,15 @@ class Shot extends Character {
     }
     this.targetArray = targets;
   }
+  /**
+   * ショットが爆発エフェクトを発生できるように設定する
+   */
+  setExplosions(targets) {
+    if (!targets || !Array.isArray(targets) || targets.length === 0) {
+      return;
+    }
+    this.explosionArray = targets;
+  }
   update() {
     if (this.life <= 0) { return; }
 
@@ -326,11 +340,92 @@ class Shot extends Character {
       // 自身と対象の幅の1/4の距離まで近づいている場合、衝突とみなす
       if (dist <= (this.width + v.width) / 4) {
         v.life -= this.power; // 対象のライフを攻撃力分減算する
-        this.life = 0; // 自身のショットを無効にする
+
+        if (v.life > 0) {
+          this.life = 0;
+        } else {
+          for (let i = 0; i < this.explosionArray.length; i++) {
+            // 発生していない爆発エフェクトがあれば対象の位置に発生する
+            if (!this.explosionArray[i].life) {
+              this.explosionArray[i].set(v.position.x, v.position.y);
+              break;
+            }
+          }
+        }
       }
     });
 
     // 座標系の回転を考慮した描画を行う
     this.rotationDraw();
+  }
+}
+
+class Explosion {
+  /**
+   * @constructor
+   * @param {CanvasRenderingContext2D} ctx - 描画などに利用する 2D コンテキスト
+   * @param {number} radius - 爆発の広がりの半径
+   * @param {number} count - 爆発の火花の数
+   * @param {number} size - 爆発の火花の大きさ（幅・高さ）
+   * @param {number} timeRange - 爆発が消えるまでの時間（秒単位）
+   * @param {string} [color] - 爆発の色
+   */
+  constructor(ctx, radius, count, size, timeRange, color = '#ff1166') {
+    this.ctx = ctx;
+    this.life = false;
+    this.color = color;
+    this.position = null;
+    this.radius = radius;
+    this.count = count;
+    this.startTime = 0;
+    this.timeRange = timeRange;
+    this.fireSize = size;
+    this.firePosition = [];
+    this.fireVector = [];
+  }
+  /**
+   * 爆発エフェクトを設定する
+   * @param {number} x - 爆発を発生させる X 座標
+   * @param {number} y - 
+   */
+  set(x, y) {
+    for (let i = 0; i < this.count; i++) {
+      this.firePosition[i] = new Position(x, y);
+      let r = Math.random() * Math.PI * 2.0;
+      let s = Math.sin(r);
+      let c = Math.cos(r);
+      this.fireVector[i] = new Position(c, s);
+    }
+    this.life = true;
+    this.startTime = Date.now();
+  }
+  update() {
+    if (!this.life) {
+      return;
+    }
+    this.ctx.fillStyle = this.color;
+    this.ctx.globalAlpha = 0.5;
+
+    // 爆発が発生してからの経過時間
+    let time = (Date.now() - this.startTime) / 1000;
+    // 爆発までの時間で正規化して進捗度合いを算出
+    let progress = Math.min(time / this.timeRange, 1.0);
+
+    // 進捗度合いに応じた位置に火花を描画する
+    for(let i = 0; i < this.firePosition.length; i++) {
+      let d = this.radius * progress;
+      let x = this.firePosition[i].x + this.fireVector[i].x * d;
+      let y = this.firePosition[i].y + this.fireVector[i].y * d;
+
+      this.ctx.fillRect(
+        x - this.fireSize / 2,
+        y - this.fireSize / 2,
+        this.fireSize,
+        this.fireSize
+      );
+    }
+    if (progress >= 1.0) {
+      this.life = false;
+    }
   }
 }
