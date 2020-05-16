@@ -8,6 +8,13 @@
   window.isKeyDown = {};
 
   /**
+   * スコアを格納する
+   * @global
+   * @type {number}
+   */
+  window.gameScore = 0;
+
+  /**
    * canvasの幅
    * @type {number}
    */
@@ -188,6 +195,7 @@
 
       if (restart) {
         restart = false;
+        window.gameScore = 0;
         viper.setComing(
           CANVAS_WIDTH / 2,
           CANVAS_HEIGHT + 50,
@@ -233,6 +241,10 @@
     // 現在までの経過時間を秒単位で取得する
     let nowTime = (Date.now() - startTime) / 1000;
 
+    // スコアの表示
+    ctx.font = 'bold 24px monospace';
+    util.drawText(zeroPadding(window.gameScore, 5), 30, 50, '#111111');
+
     // シーンを更新する
     scene.update();
 
@@ -265,5 +277,16 @@
     });
 
     requestAnimationFrame(render);
+  }
+
+  /**
+   * 数値の不足した桁数をゼロで埋めた文字数を返す
+   * @param {number} number - 数値
+   * @param {number} count - 桁数(２桁以上)
+   */
+  function zeroPadding(number, count) {
+    let zeroArray = new Array(count);
+    let zeroString = zeroArray.join('0') + number;
+    return zeroString.slice(-count);
   }
 })();

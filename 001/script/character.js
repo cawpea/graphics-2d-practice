@@ -359,6 +359,10 @@ class Shot extends Character {
               break;
             }
           }
+          // もし対象が敵キャラクターの場合はスコアを加算する
+          if (v instanceof Enemy) {
+            window.gameScore = Math.min(window.gameScore + 100, 99999);
+          }
         }
       }
     });
