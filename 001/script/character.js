@@ -113,6 +113,7 @@ class Viper extends Character {
     this.singleShotArray = null;
   }
   setComing(startX, startY, endX, endY) {
+    this.life = 1;
     this.isComing = true;
     this.comingStart = Date.now();
     this.position.set(startX, startY);
@@ -124,6 +125,9 @@ class Viper extends Character {
     this.singleShotArray = singleShotArray;
   }
   update() {
+    if (this.life <= 0) {
+      return;
+    }
     let justTime = Date.now();
 
     if (this.isComing) {
@@ -339,6 +343,10 @@ class Shot extends Character {
       let dist = this.position.distance(v.position);
       // 自身と対象の幅の1/4の距離まで近づいている場合、衝突とみなす
       if (dist <= (this.width + v.width) / 4) {
+        // 自機キャラクターが対象の場合、isComingフラグによって無敵になる
+        if (v instanceof Viper && v.isComing) {
+          return;
+        }
         v.life -= this.power; // 対象のライフを攻撃力分減算する
 
         if (v.life > 0) {
