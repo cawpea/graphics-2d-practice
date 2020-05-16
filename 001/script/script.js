@@ -21,9 +21,14 @@
   const CANVAS_WIDTH = 640;
 
   /**
-   * 敵キャラクターのインスタンス数
+   * 敵キャラクター（小）のインスタンス数
    */
-  const ENEMY_MAX_COUNT = 10;
+  const ENEMY_SMALL_MAX_COUNT = 20;
+
+  /**
+   * 敵キャラクター（大）のインスタンス数
+   */
+  const ENEMY_LARGE_MAX_COUNT = 5;
 
   /**
    * ショットの最大個数
@@ -110,10 +115,6 @@
       CANVAS_HEIGHT - 100
     );
 
-    for(let i = 0; i < ENEMY_MAX_COUNT; i++) {
-      enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png');
-    }
-
     for(let i = 0; i < EXPLOSION_MAX_COUNT; i++) {
       explosionArray[i] = new Explosion(ctx, 50.0, 15, 30.0, 0.25);
     }
@@ -131,9 +132,15 @@
       enemyShotArray[i].setTargets([viper]);
       enemyShotArray[i].setExplosions(explosionArray);
     }
-    for(let i = 0; i < ENEMY_MAX_COUNT; i++) {
+    for (let i = 0; i < ENEMY_SMALL_MAX_COUNT; i++) {
       enemyArray[i] = new Enemy(ctx, 0, 0, 48, 48, './image/enemy_small.png');
       enemyArray[i].setShotArray(enemyShotArray);
+      enemyArray[i].setAttackTarget(viper);
+    }
+    for(let i = 0; i < ENEMY_LARGE_MAX_COUNT; i++) {
+      enemyArray[ENEMY_SMALL_MAX_COUNT + i] = new Enemy(ctx, 0, 0, 64, 64, './image/enemy_large.png');
+      enemyArray[ENEMY_SMALL_MAX_COUNT + i].setShotArray(enemyShotArray);
+      enemyArray[ENEMY_SMALL_MAX_COUNT + i].setAttackTarget(viper);
     }
 
     // 衝突判定を行うために対象を設定する
@@ -162,8 +169,8 @@
 
   function sceneSetting() {
     scene.add('intro', (time) => {
-      if (time > 2.0) {
-        scene.use('invade');
+      if (time > 3.0) {
+        scene.use('invade_default_type');
       }
     });
     scene.add('invade', (time) => {
@@ -179,6 +186,80 @@
       }
       if (scene.frame === 100) {
         scene.use('invade');
+      }
+      if (viper.life <= 0) {
+        scene.use('gameover');
+      }
+    });
+    scene.add('invade_default_type', (time) => {
+      if (scene.frame % 30 === 0) {
+        for (let i = 0; i < ENEMY_SMALL_MAX_COUNT; i++) {
+          if (enemyArray[i].life <= 0) {
+            let e = enemyArray[i];
+            if (scene.frame % 60 === 0) {
+              // 左側面から出てくる
+              e.set(-e.width, 30, 2, 'default');
+              e.setVectorFromAngle(degreesToRadians(30));
+            } else {
+              // 右側面から出てくる
+              e.set(CANVAS_WIDTH + e.width, 30, 2, 'default');
+              e.setVectorFromAngle(degreesToRadians(150));
+            }
+            break;
+          }
+        }
+      }
+      if (scene.frame === 270) {
+        scene.use('blank');
+      }
+      if (viper.life <= 0) {
+        scene.use('gameover');
+      }
+    });
+    scene.add('blank', (time) => {
+      if (scene.frame === 150) {
+        scene.use('invade_wave_move_type');
+      }
+      if (viper.life <= 0) {
+        scene.use('gameover');
+      }
+    });
+    scene.add('invade_wave_move_type', (time) => {
+      if (scene.frame % 50 === 0) {
+        for (let i = 0; i < ENEMY_SMALL_MAX_COUNT; i++) {
+          if (enemyArray[i].life <= 0) {
+            let e = enemyArray[i];
+            if (scene.frame <= 200) {
+              // 左側を進む
+              e.set(CANVAS_WIDTH * 0.2, -e.height, 2, 'wave');
+            } else {
+              // 右側を進む
+              e.set(CANVAS_WIDTH * 0.8, -e.height, 2, 'wave');
+            }
+            break;
+          }
+        }
+      }
+      if (scene.frame === 450) {
+        scene.use('invade_large_type');
+      }
+      if (viper.life <= 0) {
+        scene.use('gameover');
+      }
+    });
+    scene.add('invade_large_type', (time) => {
+      if (scene.frame === 100) {
+        let i = ENEMY_SMALL_MAX_COUNT + ENEMY_LARGE_MAX_COUNT;
+        for (let j = ENEMY_SMALL_MAX_COUNT; j < i; j++) {
+          if (enemyArray[j].life <= 0) {
+            let e = enemyArray[j];
+            e.set(CANVAS_WIDTH / 2, -e.height, 50, 'large');
+            break;
+          }
+        }
+      }
+      if (scene.frame === 500) {
+        scene.use('intro');
       }
       if (viper.life <= 0) {
         scene.use('gameover');
@@ -277,6 +358,14 @@
     });
 
     requestAnimationFrame(render);
+  }
+
+  /**
+   * 度数法の角度からラジアンを生成する
+   * @param {number} degrees - 度数法の度数
+   */
+  function degreesToRadians(degrees) {
+    return degrees * Math.PI / 180;
   }
 
   /**

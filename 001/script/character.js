@@ -6,6 +6,23 @@ class Position {
     this.x = x;
     this.y = y;
   }
+  /**
+   * ベクトルの長さを返す静的メソッド
+   * @param {number} x - X要素
+   * @param {number} y - Y要素
+   */
+  static calcLength(x, y) {
+    return Math.sqrt(x * x + y * y);
+  }
+  /**
+   * ベクトルを単位化した結果を返す静的メソッド
+   * @param {number} x - X要素
+   * @param {number} y - Y要素
+   */
+  static calcNormal(x, y) {
+    let len = Position.calcLength(x, y);
+    return new Position(x / len, y / len);
+  }
   set(x, y) {
     if(x) { this.x = x; }
     if(y) { this.y = y; }
@@ -207,6 +224,10 @@ class Enemy extends Character {
     this.frame = 0;
     this.speed = 3;
     this.shotArray = null;
+    /**
+     * 自身が攻撃の対象とする Character 由来のインスタンス
+     */
+    this.attackTarget = null;
   }
   set(x, y, life = 1, type = 'default') {
     this.position.set(x, y);
@@ -217,16 +238,56 @@ class Enemy extends Character {
   setShotArray(shotArray) {
     this.shotArray = shotArray;
   }
+  /**
+   * 攻撃対象を設定する
+   * @param {Character} target - 自身が攻撃対象とするインスタンス
+   */
+  setAttackTarget(target) {
+    this.attackTarget = target;
+  }
   update() {
     if (this.life <= 0) {
       return;
     }
 
     switch(this.type) {
+      case 'wave':
+        if (this.frame % 60 === 0) {
+          // 攻撃対象に向かうベクトル
+          let tx = this.attackTarget.position.x - this.position.x;
+          let ty = this.attackTarget.position.y - this.position.y;
+          // ベクトルを単位化する
+          let tv = Position.calcNormal(tx, ty);
+          this.fire(tv.x, tv.y, 4.0);
+        }
+        // X座標はサイン波で、Y座標を一定量で変化する
+        this.position.x += Math.sin(this.frame / 10);
+        this.position.y += 2.0;
+
+        if (this.position.y - this.height > this.ctx.canvas.height) {
+          this.life = 0;
+        }
+        break;
+      case 'large':
+        if (this.frame % 50 === 0) {
+          for (let i = 0; i < 360; i += 45) {
+            let r = i * Math.PI / 180;
+            let s = Math.sin(r);
+            let c = Math.cos(r);
+            this.fire(c, s, 3.0);
+          }
+        }
+        // X座標はサイン波で、Y座標は一定量で変化する
+        this.position.x += Math.sin((this.frame + 90) / 50) * 2.0;
+        this.position.y += 1.0;
+
+        if (this.position.y - this.height > this.ctx.canvas.height) {
+          this.life = 0;
+        }
+        break;
       case 'default':
       default:
-        // 配置後のフレームが50のときにショットを放つ
-        if (this.frame === 50) {
+        if (this.frame === 100) {
           this.fire();
         }
         this.position.x += this.vector.x * this.speed;
@@ -328,7 +389,13 @@ class Shot extends Character {
   update() {
     if (this.life <= 0) { return; }
 
-    if (this.position.y + this.height < 0) {
+    // ショットが画面外へ移動していたらライフを0にする
+    if (
+      this.position.x + this.width < 0 ||
+      this.position.x - this.width > this.ctx.canvas.width ||
+      this.position.y + this.height < 0 ||
+      this.position.y - this.height > this.ctx.canvas.height
+    ) {
       this.life = 0;
     }
     // ショットを上に向かって移動させる
@@ -361,7 +428,8 @@ class Shot extends Character {
           }
           // もし対象が敵キャラクターの場合はスコアを加算する
           if (v instanceof Enemy) {
-            window.gameScore = Math.min(window.gameScore + 100, 99999);
+            let score = v.type === 'large' ? 1000 : 100;
+            window.gameScore = Math.min(window.gameScore + score, 99999);
           }
         }
       }
