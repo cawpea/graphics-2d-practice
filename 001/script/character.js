@@ -379,8 +379,21 @@ class Explosion {
     this.count = count;
     this.startTime = 0;
     this.timeRange = timeRange;
-    this.fireSize = size;
+    /**
+     * 火花のひとつあたりの最大の大きさ（幅・高さ）
+     */
+    this.fireBaseSize = size;
+    /**
+     * 火花のひとつあたりの大きさを格納する
+     */
+    this.fireSize = [];
+    /**
+     * 火花の位置を格納する
+     */
     this.firePosition = [];
+    /**
+     * 火花の進行方向を格納する
+     */
     this.fireVector = [];
   }
   /**
@@ -391,10 +404,13 @@ class Explosion {
   set(x, y) {
     for (let i = 0; i < this.count; i++) {
       this.firePosition[i] = new Position(x, y);
-      let r = Math.random() * Math.PI * 2.0;
-      let s = Math.sin(r);
-      let c = Math.cos(r);
-      this.fireVector[i] = new Position(c, s);
+      let vr = Math.random() * Math.PI * 2.0;
+      let s = Math.sin(vr);
+      let c = Math.cos(vr);
+      // 進行方向の長さをランダムに短くし移動量をランダム化する
+      let mr = Math.random();
+      this.fireVector[i] = new Position(c * mr, s * mr);
+      this.fireSize[i] = (Math.random() * 0.5 + 0.5) * this.fireBaseSize;
     }
     this.life = true;
     this.startTime = Date.now();
@@ -409,23 +425,30 @@ class Explosion {
     // 爆発が発生してからの経過時間
     let time = (Date.now() - this.startTime) / 1000;
     // 爆発までの時間で正規化して進捗度合いを算出
-    let progress = Math.min(time / this.timeRange, 1.0);
+    let ease = simpleEaseIn(1.0 - Math.min(time / this.timeRange, 1.0));
+    let progress = 1.0 - ease;
 
     // 進捗度合いに応じた位置に火花を描画する
     for(let i = 0; i < this.firePosition.length; i++) {
       let d = this.radius * progress;
       let x = this.firePosition[i].x + this.fireVector[i].x * d;
       let y = this.firePosition[i].y + this.fireVector[i].y * d;
+      // 進捗を描かれる大きさにも反映する
+      let s = 1.0 - progress;
 
       this.ctx.fillRect(
-        x - this.fireSize / 2,
-        y - this.fireSize / 2,
-        this.fireSize,
-        this.fireSize
+        x - (this.fireSize[i] * s) / 2,
+        y - (this.fireSize[i] * s) / 2,
+        this.fireSize[i] * s,
+        this.fireSize[i] * s
       );
     }
     if (progress >= 1.0) {
       this.life = false;
     }
   }
+}
+
+function simpleEaseIn(t) {
+  return t * t * t * t;
 }
