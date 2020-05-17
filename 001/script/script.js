@@ -47,6 +47,21 @@
   const EXPLOSION_MAX_COUNT = 10;
 
   /**
+   * 背景を流れる星の個数
+   */
+  const BACKGROUND_STAR_MAX_COUNT = 100;
+
+  /**
+   * 背景を流れる星の最大サイズ
+   */
+  const BACKGROUND_STAR_MAX_SIZE = 3;
+
+  /**
+   * 背景を流れる星野最大速度
+   */
+  const BACKGROUND_STAR_MAX_SPEED = 4;
+
+  /**
    * canvasの高さ
    * @type {number}
    */
@@ -84,6 +99,11 @@
    * 爆発エフェクトのインスタンスを格納する配列
    */
   let explosionArray = [];
+
+  /**
+   * 流れる星のインスタンスを格納する配列
+   */
+  let backgroundStarArray = [];
 
   /**
    * 再スタートするためのフラグ
@@ -151,6 +171,16 @@
       shotArray[i].setExplosions(explosionArray);
       singleShotArray[i * 2].setExplosions(explosionArray);
       singleShotArray[i * 2 + 1].setExplosions(explosionArray);
+    }
+
+    // 流れる星を初期化する
+    for(let i = 0; i < BACKGROUND_STAR_MAX_COUNT; i++) {
+      let size = 1 + Math.random() * (BACKGROUND_STAR_MAX_SIZE - 1);
+      let speed = 1 + Math.random() * (BACKGROUND_STAR_MAX_SPEED - 1);
+      backgroundStarArray[i] = new BackgroundStar(ctx, size, speed);
+      let x = Math.random() * CANVAS_WIDTH;
+      let y = Math.random() * CANVAS_HEIGHT;
+      backgroundStarArray[i].set(x, y);
     }
   }
 
@@ -317,17 +347,21 @@
 
   function render() {
     ctx.globalAlpha = 1.0;
-    util.drawRect(0, 0, canvas.width, canvas.height, '#eeeeee');
+    util.drawRect(0, 0, canvas.width, canvas.height, '#111122');
 
     // 現在までの経過時間を秒単位で取得する
     let nowTime = (Date.now() - startTime) / 1000;
 
     // スコアの表示
     ctx.font = 'bold 24px monospace';
-    util.drawText(zeroPadding(window.gameScore, 5), 30, 50, '#111111');
+    util.drawText(zeroPadding(window.gameScore, 5), 30, 50, '#FFF');
 
     // シーンを更新する
     scene.update();
+
+    backgroundStarArray.map((v) => {
+      v.update();
+    });
 
     // 自機キャラクターの状態を更新する
     viper.update();

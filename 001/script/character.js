@@ -529,6 +529,45 @@ class Explosion {
   }
 }
 
+class BackgroundStar {
+  /**
+   * @constructor
+   * @param {CanvasRenderingContext2D} ctx - 描画などに利用する2Dコンテキスト
+   * @param {number} size - 星の大きさ（幅・高さ）
+   * @param {number} speed - 星の移動速度
+   * @param {string} [color] - 星の色
+   */
+  constructor(ctx, size, speed, color = '#FFFFFF') {
+    this.ctx = ctx;
+    this.size = size;
+    this.speed = speed;
+    this.color = color;
+    this.position = null;
+  }
+  /**
+   * 星を設定する
+   * @param {number} x - 星を発生させるX座標
+   * @param {number} y - 星を発生させるY座標
+   */
+  set(x, y) {
+    this.position = new Position(x, y);
+  }
+  update() {
+    this.ctx.fillStyle = this.color;
+    this.position.y += this.speed;
+    this.ctx.fillRect(
+      this.position.x - this.size / 2,
+      this.position.y - this.size / 2,
+      this.size,
+      this.size
+    );
+    // 画面下端よりも外に出てしまっていたら上橋側に戻す
+    if (this.position.y + this.size > this.ctx.canvas.height) {
+      this.position.y = -this.size;
+    }
+  }
+}
+
 function simpleEaseIn(t) {
   return t * t * t * t;
 }
