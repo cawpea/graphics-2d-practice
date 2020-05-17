@@ -475,6 +475,11 @@ class Explosion {
      * 火花の進行方向を格納する
      */
     this.fireVector = [];
+    /**
+     * サウンド再生のためのSoundクラスのインスタンス
+     * @type {Sound}
+     */
+    this.sound = null;
   }
   /**
    * 爆発エフェクトを設定する
@@ -494,6 +499,13 @@ class Explosion {
     }
     this.life = true;
     this.startTime = Date.now();
+
+    if (this.sound) {
+      this.sound.play();
+    }
+  }
+  setSound(sound) {
+    this.sound = sound;
   }
   update() {
     if (!this.life) {

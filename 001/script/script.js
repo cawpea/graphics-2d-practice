@@ -116,8 +116,19 @@
     canvas = util.canvas;
     ctx = util.context;
 
-    initialize();
-    loadCheck();
+    let button = document.body.querySelector('#start_button');
+    button.addEventListener('click', () => {
+      button.disabled = true;
+      sound = new Sound();
+      sound.load('./sound/explosion.mp3', (error) => {
+        if (error) {
+          alert('ファイルの読み込みエラーです');
+          return;
+        }
+        initialize();
+        loadCheck();
+      });
+    });
   });
 
   function initialize() {
@@ -137,6 +148,7 @@
 
     for(let i = 0; i < EXPLOSION_MAX_COUNT; i++) {
       explosionArray[i] = new Explosion(ctx, 50.0, 15, 30.0, 0.25);
+      explosionArray[i].setSound(sound);
     }
 
     for(let i = 0; i < SHOT_MAX_COUNT; i++) {
